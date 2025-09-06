@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+    .app {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #f9f9f9;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .completed {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .actions button {
+      margin-left: 5px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+    .task-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .date-time {
+      font-size: 0.8rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>To-Do App</h1>
+    <form id="taskForm">
+      <input type="text" id="taskInput" placeholder="Enter a task" required />
+      <input type="datetime-local" id="taskDateTime" />
+      <button type="submit">Add Task</button>
+    </form>
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    const taskForm = document.getElementById('taskForm');
+    const taskInput = document.getElementById('taskInput');
+    const taskDateTime = document.getElementById('taskDateTime');
+    const taskList = document.getElementById('taskList');
+
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    taskForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const taskText = taskInput.value.trim();
+      const taskTime = taskDateTime.value;
+      if (taskText === '') return;
+
+      const task = {
+        id: Date.now(),
+        text: taskText,
+        dateTime: taskTime,
+        completed: false
+      };
+
+      tasks.push(task);
+      saveTasks();
+      renderTasks();
+      taskForm.reset();
+    });
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+
+        const taskInfo = document.createElement('div');
+        taskInfo.classList.add('task-info');
+        const taskText = document.createElement('span');
+        taskText.textContent = task.text;
+        if (task.completed) {
+          taskText.classList.add('completed');
+        }
+        const taskDate = document.createElement('span');
+        taskDate.classList.add('date-time');
+        taskDate.textContent = task.dateTime ? `⏰ ${task.dateTime}` : '';
+
+        taskInfo.appendChild(taskText);
+        taskInfo.appendChild(taskDate);
+
+        const actions = document.createElement('div');
+        actions.classList.add('actions');
+
+        const completeBtn = document.createElement('button');
+        completeBtn.textContent = task.completed ? 'Undo' : 'Done';
+        completeBtn.onclick = () => toggleComplete(task.id);
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.onclick = () => editTask(task.id);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = () => deleteTask(task.id);
+
+        actions.appendChild(completeBtn);
+        actions.appendChild(editBtn);
+        actions.appendChild(deleteBtn);
+
+        li.appendChild(taskInfo);
+        li.appendChild(actions);
+        taskList.appendChild(li);
+      });
+    }
+
+    function toggleComplete(id) {
+      tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
+      saveTasks();
+      renderTasks();
+    }
+
+    function editTask(id) {
+      const task = tasks.find(t => t.id === id);
+      const newText = prompt('Edit task:', task.text);
+      if (newText !== null) {
+        task.text = newText.trim();
+        saveTasks();
+        renderTasks();
+      }
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(task => task.id !== id);
+      saveTasks();
+      renderTasks();
+    }
+
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    // Initial render
+    renderTasks();
+  </script>
+</body>
+</html>
